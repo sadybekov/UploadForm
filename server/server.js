@@ -6,14 +6,17 @@ const mongoose = require  ('mongoose')
 const bodyParser = require ('body-parser')
 const AWS = require('aws-sdk')
 const uuid = require('uuid/v4')
+const cors = require('cors')
 
 //express
 const app = express()
-app.use(bodyParser.urlencoded({extended: true}))
+// app.use(bodyParser.urlencoded({extended: true}))
+// app.use(bodyParser.json())
+app.use(cors())
 // app.use(express.static('../client/public'))
 
 //make express to listen on port other than React
-let port = 5000
+let port = 8000
 app.listen(port, ()=>console.log(`listening on port ${port}`))
 
 //s3 initiation
@@ -23,13 +26,69 @@ const s3 = new AWS.S3({
     // region: process.env.AWS_REGION
 })
 
-const storage = multer.memoryStorage({
-    destination: function(req, file, callback){
-        callback(null, '')
+// const storage = multer.memoryStorage({
+//     destination: function(req, file, callback){
+//         callback(null, 'public')
+//     }
+// })
+
+const storage = multer.diskStorage({
+    destination: function (req, file, cb){
+        cb( null, './public' )
+    }, 
+    filename: function (req, file, cb){
+        cb( null, Date.now() + '-' + file.originalname )
     }
 })
 
-const upload = multer({storage}).single('image')
+const upload = multer({storage: storage}).array('file')
+
+app.post('/upload', function (req, res) {
+    
+    upload (req, res, function (err){
+        console.log('buffer')
+    // console.log(req.files[0].buffer)
+    console.log('stream')
+    console.log(req)
+        if (err instanceof multer.MulterError){
+            return res.status(500).json(err)
+        } else if (err) {
+            return res.status(500).json(err)
+        }
+    return res.status(200).send(req.file)
+    })
+})
+
+// app.post('/upload', upload, (req, res)=>{
+
+//     let myFile = req.file.originalname.split('.')
+//     const fileType = myFile[myFile.length - 1]
+
+//     const params = {
+//         Bucket: process.env.AWS_BUCKET_NAME,
+//         Key: `${uuid()}.${fileType}`,
+//         Body: req.file.buffer
+//     }
+
+//     s3.upload(params, (error, data)=>{
+//         if(error){
+//             res.status(500).send(error)
+//         }
+//             res.status(200).send(data)
+        
+//     })
+// })
+
+app.get('/home', (req, res)=>{
+    console.log('got the signal')
+    res.json({
+        name:'Test respond',
+        age: 990    
+    })
+})
+
+
+
 
 //Routs
 
@@ -40,25 +99,7 @@ app.get('/', (req, res)=>{
 app.post('/images', (req, res)=>{
     res.send('YAHOO')
 })
-app.post('/upload', upload, (req, res)=>{
 
-    let myFile = req.file.originalname.split('.')
-    const fileType = myFile[myFile.length - 1]
-
-    const params = {
-        Bucket: process.env.AWS_BUCKET_NAME,
-        Key: `${uuid()}.${fileType}`,
-        Body: req.file.buffer
-    }
-
-    s3.upload(params, (error, data)=>{
-        if(error){
-            res.status(500).send(error)
-        }
-            res.status(200).send(data)
-        
-    })
-})
 
 
 
