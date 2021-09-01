@@ -1,7 +1,9 @@
 //import modules
-require('dotenv/config')
+// require('dotenv/config')
+require ('dotenv').config()
 const express = require ('express')
 const multer = require ('multer')
+const multerS3 = require ('multer-s3')
 const mongoose = require  ('mongoose')
 const bodyParser = require ('body-parser')
 const AWS = require('aws-sdk')
@@ -10,20 +12,22 @@ const cors = require('cors')
 
 //express
 const app = express()
-// app.use(bodyParser.urlencoded({extended: true}))
-// app.use(bodyParser.json())
 app.use(cors())
-// app.use(express.static('../client/public'))
 
 //make express to listen on port other than React
 let port = 8000
 app.listen(port, ()=>console.log(`listening on port ${port}`))
 
+console.log(require('dotenv').config())
+// app.use(bodyParser.urlencoded({extended: true}))
+app.use(bodyParser.json())
+// app.use(express.static('../client/public'))
+
+
 //s3 initiation
 const s3 = new AWS.S3({
-    accessKeyId: process.env.AWS_ID,
-    secretAccessKey: process.env.AWS_SECRET
-    // region: process.env.AWS_REGION
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
 })
 
 // const storage = multer.memoryStorage({
@@ -58,6 +62,40 @@ app.post('/upload', function (req, res) {
     return res.status(200).send(req.file)
     })
 })
+
+const uploadAWS = multer({
+    storage: multerS3({
+        s3: s3,
+        bucket: 'game-jam-2021', 
+        contentType: multerS3.AUTO_CONTENT_TYPE,
+        metadata: function (req, file, cb) {
+            cb(null, {fieldName: file.fieldname});
+          },
+        key: function (req, file, cb){
+            console.log(file)
+            cb(null, 'Team1/' + file.originalname);
+            // acl: 'public-read'
+        }
+    })
+})
+app.post('/uploadAWS', uploadAWS.array('file'), function (req, res){
+    res.send('Uploaded ' + req.files.length + ' files')
+    // res.send(req.file.location)
+    // const fileToUpload = req.file
+    // const fileName = fileToUpload.originalname
+    // const params = {
+    //     Bucket: process.env.AWS_BUCKET_NAME, 
+    //     Key: `someTeam/${fileName}`,
+    //     Body: JSON.stringify(data, null, 2)
+    // }
+    
+    // s3.upload(params, function (s3Err, data){
+    //     if (s3Err) throw s3Err
+    //     console.log(`File uploaded successfully at ${data.Location}`)
+    // })
+})
+
+
 
 // app.post('/upload', upload, (req, res)=>{
 

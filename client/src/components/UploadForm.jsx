@@ -9,6 +9,9 @@ function UploadForm() {
         selectedFile: null
     })
 
+
+
+
     function handleOnChange(event){
         console.log(`uploaded the following`)
         console.log(event.target.files)
@@ -22,7 +25,6 @@ function UploadForm() {
         console.log('submitted')
         const data = new FormData()
         for (let x = 0; x< filesUploaded.selectedFile.length; x++){
-            console.log(filesUploaded.selectedFile.buffer)
             data.append('file', filesUploaded.selectedFile[x])
         }
         
@@ -35,16 +37,50 @@ function UploadForm() {
         .then(res => {console.log('this is axios post '+res.statusText)})
     }
 
+    function handleOnClickAWS(event) {
+        event.preventDefault()
+        console.log('submitted')
+        console.log(event.target)
+        const data = new FormData()
+        for (let x = 0; x< filesUploaded.selectedFile.length; x++){
+            console.log(filesUploaded.selectedFile.buffer)
+            data.append('file', filesUploaded.selectedFile[x])
+        }
+        
+        console.log(data)
+        console.log('this is step 2')
+        
+        axios.post('http://localhost:8000/uploadAWS', data, {
+
+        })
+        .then(res => {console.log('this is axios post '+res.statusText)})
+    }
+
 
     return (
         <div>
             <h1>Upload your files here</h1>
             <form className='note' action="">
-                <input onChange={handleOnChange} type="file" multiple name='file'/>
-                <textarea  name="text" id="" cols="20" placeholder="Description" rows="3">
+                <label for="team">Team: </label>
+                <input type="text" name='team' required/>
+                <label for="game">Game: </label>
+                <input type="text" name='game' required/>
+                <label for="gameDescription">Game description: </label>
+                {/* <textarea  name="team" id="" cols="20" placeholder="Team name" rows="1" required>
                 </textarea>
-                <Zoom in={true}>
+                <textarea  name="game" id="" cols="20" placeholder="Game name" rows="3" required>
+                </textarea> */}
+                <textarea  name="gameDescription" id="" cols="20" placeholder="Game description" rows="3" required>
+                </textarea>
+            
+                <input onChange={handleOnChange} type="file" multiple name='file'/>
+                {/* <Zoom in={true}>
                 <Fab onClick={handleOnClick} type='submit' aria-label='add'>
+                    <AddIcon/>
+                </Fab>
+                </Zoom> */}
+                <Zoom in={true}>
+                <Fab onClick={handleOnClickAWS} type='submit' aria-label='add'>
                     <AddIcon/>
                 </Fab>
                 </Zoom>
